@@ -8,7 +8,7 @@ from datetime import datetime
 
 # 🔹 Initialize Flask app
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/*": {"origins": "https://gtc-search-tqnh.onrender.com"}})
 
 # Initialize SQLite database for tracking IP-based searches
 def init_db():
