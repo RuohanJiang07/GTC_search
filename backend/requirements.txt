@@ -2,9 +2,6 @@
 flask
 flask-cors
 
-# Database (SQLite)
-sqlite3  # (Optional, usually built into Python)
-
 # Machine Learning & Data Processing
 pandas
 numpy
