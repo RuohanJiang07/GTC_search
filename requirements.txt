@@ -1,7 +1,0 @@
-# requirements.txt
-gunicorn
-uvicorn
-fastapi  # If using FastAPI
-flask  # If using Flask
-openai  # If using OpenAI
-python-dotenv  # If using environment variables
