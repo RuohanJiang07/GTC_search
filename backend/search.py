@@ -1,19 +1,27 @@
-import openai
-import pandas as pd
+import os
 import json
 import numpy as np
+import pandas as pd
 from numpy.linalg import norm
 from rapidfuzz import process
-import os
 from dotenv import load_dotenv
+from openai import AzureOpenAI
 
-# Load environment variables from .env
+# 🔹 Load environment variables from .env
 load_dotenv()
-openai.api_key = os.getenv("OPENAI_API_KEY")
+
+# 🔹 Initialize Azure OpenAI client
+client = AzureOpenAI(
+    api_key=os.getenv("AZURE_OPENAI_API_KEY"),
+    api_version=os.getenv("AZURE_OPENAI_API_VERSION", "2024-07-01-preview"),  # Default version if not set
+    azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
+)
 
 # 🔹 Load CSV with stored embeddings
 csv_file = "gtc_2025_event_speakers_with_embeddings.csv"
 df = pd.read_csv(csv_file)
+
+# Convert JSON string embeddings to NumPy arrays
 df["embedding"] = df["embedding"].apply(lambda x: np.array(json.loads(x)))
 
 # 🔹 Cosine similarity function
@@ -28,15 +36,21 @@ def fuzzy_name_search(query, threshold=85):
         return df[df["full_name"] == match].iloc[0]
     return None
 
-# 🔹 Semantic search function
+# 🔹 Semantic search function (using Azure OpenAI embeddings)
 def semantic_search(query, top_k=5):
     try:
-        response = openai.embeddings.create(input=query, model="text-embedding-3-small")
+        response = client.embeddings.create(
+            input=query, 
+            model="text-embedding-3-small"  # Ensure this matches your Azure deployment
+        )
         query_embedding = np.array(response.data[0].embedding)
+        
+        # Compute cosine similarity
         df["similarity"] = df["embedding"].apply(lambda emb: cosine_similarity(query_embedding, emb))
+        
         return df.nlargest(top_k, "similarity")[["full_name", "title", "company", "bio", "linkedin_url", "sessions", "photo_url", "similarity"]]
     except Exception as e:
-        print(f"Error during semantic search: {e}")
+        print(f"❌ Error during semantic search: {e}")
         return pd.DataFrame()
 
 # 🔹 Main function: Hybrid search
